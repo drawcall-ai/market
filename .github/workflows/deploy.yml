@@ -40,6 +40,7 @@ jobs:
       - run: pnpm --filter @market/api run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKER_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: f9603af4549c04d25bdbbc04fd5ea112
 
   deploy-web:
     name: Deploy Web (Pages)
@@ -59,3 +60,4 @@ jobs:
       - run: npx wrangler@3 pages deploy packages/web/dist --project-name=market-web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKER_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: f9603af4549c04d25bdbbc04fd5ea112

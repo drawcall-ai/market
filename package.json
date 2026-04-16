@@ -1,0 +1,39 @@
+{
+  "name": "market",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd",
+      "sharp"
+    ]
+  },
+  "scripts": {
+    "dev": "pnpm --filter @market/api dev & pnpm --filter @market/web dev",
+    "dev:api": "pnpm --filter @market/api dev",
+    "dev:web": "pnpm --filter @market/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint 'packages/*/src/**/*.{ts,tsx}'",
+    "lint:fix": "eslint --fix 'packages/*/src/**/*.{ts,tsx}'",
+    "format": "prettier --check 'packages/*/src/**/*.{ts,tsx}'",
+    "format:fix": "prettier --write 'packages/*/src/**/*.{ts,tsx}'",
+    "db:generate": "pnpm --filter @market/db db:generate",
+    "db:push": "pnpm --filter @market/db db:push",
+    "db:seed": "pnpm --filter @market/db db:seed",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.59.1",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.5.0",
+    "playwright": "^1.59.1",
+    "prettier": "^3.8.3",
+    "typescript-eslint": "^8.58.2"
+  }
+}

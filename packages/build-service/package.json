@@ -1,0 +1,22 @@
+{
+  "name": "@market/build-service",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@drawcall/market": "workspace:*",
+    "@orpc/client": "^1.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "vite": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

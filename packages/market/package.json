@@ -1,0 +1,31 @@
+{
+  "name": "@drawcall/market",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "market": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@orpc/contract": "^1.0.0",
+    "@orpc/client": "^1.0.0",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "nypm": "^0.6.0",
+    "semver": "^7.7.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/semver": "^7.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

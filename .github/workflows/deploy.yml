@@ -61,3 +61,25 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKER_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: f9603af4549c04d25bdbbc04fd5ea112
+
+  publish-market:
+    name: Publish @drawcall/market (npm)
+    needs: typecheck
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+      - run: npm install -g npm@11.9.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @drawcall/market build
+      - run: pnpm --filter @drawcall/market publish --access public --no-git-checks --tag latest
+        env:
+          NPM_CONFIG_PROVENANCE: true

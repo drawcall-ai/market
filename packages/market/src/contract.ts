@@ -2,6 +2,7 @@ import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import {
   assetNameSchema,
+  assetTypeSchema,
   semverSchema,
   listAssetsSchema,
   updateProfileSchema,
@@ -106,6 +107,15 @@ export interface FileTreeEntry {
   size: number
 }
 
+export interface GenerateJobStatus {
+  jobId: string
+  state: 'queued' | 'running' | 'done' | 'failed'
+  message: string | null
+  assetName: string | null
+  version: string | null
+  error: string | null
+}
+
 // ─── Contract ─────────────────────────────────────────────────────────────────
 
 export const contract = {
@@ -114,9 +124,7 @@ export const contract = {
       .input(z.object({ name: assetNameSchema }))
       .output(z.custom<AssetWithVersionsAndTags | null>()),
 
-    list: oc
-      .input(listAssetsSchema)
-      .output(z.custom<PaginatedList<AssetListItem>>()),
+    list: oc.input(listAssetsSchema).output(z.custom<PaginatedList<AssetListItem>>()),
 
     getVersionTree: oc
       .input(z.object({ name: z.string(), version: semverSchema }))
@@ -144,44 +152,46 @@ export const contract = {
       .input(uploadTypedSchema.extend({ file: z.instanceof(File) }))
       .output(z.custom<AssetVersion>()),
 
-    material: oc
-      .input(uploadMaterialSchema)
-      .output(z.custom<AssetVersion>()),
+    material: oc.input(uploadMaterialSchema).output(z.custom<AssetVersion>()),
   },
 
   admin: {
-    listUnapproved: oc
-      .output(z.custom<UnapprovedItem[]>()),
+    listUnapproved: oc.output(z.custom<UnapprovedItem[]>()),
 
     approve: oc
       .input(z.object({ assetName: z.string(), version: z.string() }))
       .output(z.object({ success: z.boolean() })),
 
-    backfillEmbeddings: oc
-      .output(z.object({ indexed: z.number() })),
+    backfillEmbeddings: oc.output(z.object({ indexed: z.number() })),
   },
 
   user: {
-    getProfile: oc
-      .output(z.custom<User | null>()),
+    getProfile: oc.output(z.custom<User | null>()),
 
-    updateProfile: oc
-      .input(updateProfileSchema)
-      .output(z.custom<User>()),
+    updateProfile: oc.input(updateProfileSchema).output(z.custom<User>()),
 
-    getApiKey: oc
-      .output(z.custom<{ prefix: string; createdAt: Date } | null>()),
+    getApiKey: oc.output(z.custom<{ prefix: string; createdAt: Date } | null>()),
 
-    regenerateApiKey: oc
-      .output(z.object({ key: z.string(), prefix: z.string() })),
+    regenerateApiKey: oc.output(z.object({ key: z.string(), prefix: z.string() })),
 
-    myAssets: oc
-      .output(z.custom<AssetWithVersions[]>()),
+    myAssets: oc.output(z.custom<AssetWithVersions[]>()),
   },
 
   tag: {
-    list: oc
-      .output(z.custom<TagWithCount[]>()),
+    list: oc.output(z.custom<TagWithCount[]>()),
+  },
+
+  generate: {
+    start: oc
+      .input(
+        z.object({
+          description: z.string().min(3).max(1000),
+          type: assetTypeSchema.optional(),
+        }),
+      )
+      .output(z.object({ jobId: z.string() })),
+
+    status: oc.input(z.object({ jobId: z.string() })).output(z.custom<GenerateJobStatus>()),
   },
 }
 

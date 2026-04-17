@@ -12,6 +12,11 @@ const DEFAULT_BASE_URL = 'https://api.market.drawcall.ai'
 export interface MarketClientOptions {
   baseUrl?: string
   fetch?: typeof globalThis.fetch
+  apiKey?: string
+}
+
+function buildHeaders(apiKey?: string): Record<string, string> | undefined {
+  return apiKey ? { 'x-api-key': apiKey } : undefined
 }
 
 export function createMarketClient(opts: MarketClientOptions = {}): MarketClient {
@@ -19,6 +24,7 @@ export function createMarketClient(opts: MarketClientOptions = {}): MarketClient
   const link = new RPCLink({
     url: new URL('/api/rpc', baseUrl).href,
     fetch: opts.fetch,
+    headers: buildHeaders(opts.apiKey),
   })
   return createORPCClient<MarketClient>(link)
 }
@@ -28,6 +34,7 @@ export function createInternalClient(opts: MarketClientOptions = {}): InternalCl
   const link = new RPCLink({
     url: new URL('/api/internal-rpc', baseUrl).href,
     fetch: opts.fetch,
+    headers: buildHeaders(opts.apiKey),
   })
   return createORPCClient<InternalClient>(link)
 }

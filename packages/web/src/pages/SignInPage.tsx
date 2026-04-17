@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { signIn, signUp } from '@/lib/auth-client'
 
 export function SignInPage() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const redirect = sanitizeRedirect(params.get('redirect'))
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,7 +31,7 @@ export function SignInPage() {
           password,
         })
       }
-      navigate('/')
+      navigate(redirect)
     } catch (err: any) {
       setError(err.message ?? 'Authentication failed')
     } finally {
@@ -38,7 +40,7 @@ export function SignInPage() {
   }
 
   async function handleGitHub() {
-    await signIn.social({ provider: 'github', callbackURL: '/' })
+    await signIn.social({ provider: 'github', callbackURL: redirect })
   }
 
   return (
@@ -133,4 +135,10 @@ export function SignInPage() {
       </div>
     </div>
   )
+}
+
+function sanitizeRedirect(raw: string | null): string {
+  // Only accept same-origin paths starting with `/` that aren't protocol-relative.
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/'
+  return raw
 }

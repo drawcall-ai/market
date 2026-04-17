@@ -20,11 +20,16 @@ export type {
   UnapprovedItem,
   TagWithCount,
   FileTreeEntry,
+  GenerateJobStatus,
 } from './contract.js'
 
 // Resolve
 export { resolve, ResolutionError } from './resolve.js'
 export type { ResolvedAsset, ResolveResult } from './resolve.js'
+
+// Generate
+export { generateAndWait, GenerateError } from './generate.js'
+export type { GenerateInput, GenerateResult, GenerateOptions } from './generate.js'
 
 // Schemas
 export {

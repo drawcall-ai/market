@@ -8,6 +8,7 @@ import { UploadPage } from '@/pages/UploadPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { CliAuthPage } from '@/pages/CliAuthPage'
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/auth/signin', element: <SignInPage /> },
       { path: '/asset/:name/:version?', element: <AssetDetailPage /> },
+      { path: '/cli-auth', element: <CliAuthPage /> },
       {
         element: <ProtectedRoute />,
         children: [

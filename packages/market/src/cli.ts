@@ -1,76 +1,97 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander'
+import { Command, Option } from 'commander'
 import chalk from 'chalk'
-import { createMarketClient } from './client.js'
-import { resolve, ResolutionError, type ResolveResult } from './resolve.js'
-import { install } from './install.js'
+import { ASSET_TYPES, type AssetType } from './schemas.js'
+import { installCommand } from './commands/install.js'
+import { searchCommand } from './commands/search.js'
+import { generateCommand } from './commands/generate.js'
+import { login } from './commands/login.js'
+import { logout } from './commands/logout.js'
+import { NotLoggedInError } from './cli-client.js'
 
 const program = new Command()
+
+const DEFAULT_BASE_URL = 'https://api.market.drawcall.ai'
+
+const typeOption = new Option('--type <type>', 'Filter by asset type').choices([...ASSET_TYPES])
+
+const apiOption = new Option('--api <url>', 'API base URL').default(
+  process.env.MARKET_API_URL,
+  'from MARKET_API_URL / config / default',
+)
 
 program.name('market').description('Install assets from the drawcall.ai market').version('0.1.0')
 
 program
-  .command('install')
-  .description('Install assets into your project')
-  .argument('<assets...>', 'Assets to install (e.g. my-model, my-model@^2.0.0)')
-  .option('--unapproved', 'Include unapproved versions', false)
-  .option(
-    '--api <url>',
-    'API base URL',
-    process.env.MARKET_API_URL ?? 'https://api.market.drawcall.ai',
-  )
-  .option('--cwd <dir>', 'Project directory', process.cwd())
-  .action(async (assetArgs: string[], opts) => {
-    const client = createMarketClient({ baseUrl: opts.api })
-
-    // Parse asset[@range] arguments
-    const requests = assetArgs.map((arg) => {
-      const atIdx = arg.indexOf('@', 1)
-      if (atIdx > 0) {
-        return { name: arg.slice(0, atIdx), range: arg.slice(atIdx + 1) }
-      }
-      return { name: arg, range: '*' }
-    })
-
-    // Resolve
-    console.log(chalk.bold('Resolving dependencies...\n'))
-
-    let resolution: ResolveResult
-    try {
-      resolution = await resolve(client.asset, requests, {
-        includeUnapproved: opts.unapproved,
-      })
-    } catch (err) {
-      if (err instanceof ResolutionError) {
-        console.error(chalk.red('Resolution failed:\n') + err.message)
-        process.exit(1)
-      }
-      throw err
-    }
-
-    console.log(chalk.green(`  ${resolution.assets.length} asset(s) resolved:\n`))
-    for (const asset of resolution.assets) {
-      console.log(`    ${chalk.cyan(asset.name)}${chalk.dim('@' + asset.version)}`)
-    }
-
-    const npmCount = Object.keys(resolution.npmDependencies).length
-    if (npmCount > 0) {
-      console.log(chalk.green(`\n  ${npmCount} npm dependenc${npmCount === 1 ? 'y' : 'ies'}:\n`))
-      for (const [pkg, range] of Object.entries(resolution.npmDependencies)) {
-        console.log(`    ${pkg} ${chalk.dim(range)}`)
-      }
-    }
-
-    // Install
-    console.log(chalk.bold('\nInstalling...\n'))
-
-    await install(client, resolution, {
-      cwd: opts.cwd,
-      onProgress: (msg) => console.log(chalk.dim(`  ${msg}`)),
-    })
-
-    console.log(chalk.bold.green('\nDone!'))
+  .command('login')
+  .description('Authenticate with the market via your browser')
+  .addOption(apiOption)
+  .action(async (opts: { api?: string }) => {
+    await login({ baseUrl: opts.api ?? DEFAULT_BASE_URL })
   })
 
-program.parse()
+program
+  .command('logout')
+  .description('Remove the local API key')
+  .action(async () => {
+    await logout()
+  })
+
+program
+  .command('install')
+  .description(
+    'Install assets. Each arg is tried as an exact name, then a semantic search, then auto-generated.',
+  )
+  .argument('<assets...>', 'Asset names or natural-language descriptions')
+  .addOption(typeOption)
+  .addOption(apiOption)
+  .option('--unapproved', 'Include unapproved versions', false)
+  .option('--cwd <dir>', 'Project directory', process.cwd())
+  .action(
+    async (
+      args: string[],
+      opts: { type?: AssetType; api?: string; unapproved: boolean; cwd: string },
+    ) => {
+      await installCommand(args, {
+        type: opts.type,
+        baseUrl: opts.api,
+        unapproved: opts.unapproved,
+        cwd: opts.cwd,
+      })
+    },
+  )
+
+program
+  .command('search')
+  .description('Search the market. Prints up to 10 ranked results.')
+  .argument('<query>', 'Natural-language query')
+  .addOption(typeOption)
+  .addOption(apiOption)
+  .action(async (query: string, opts: { type?: AssetType; api?: string }) => {
+    await searchCommand(query, { type: opts.type, baseUrl: opts.api })
+  })
+
+program
+  .command('generate')
+  .description('Generate a new asset from a description and install it.')
+  .argument('<description>', 'Description of the asset to generate')
+  .addOption(typeOption)
+  .addOption(apiOption)
+  .option('--cwd <dir>', 'Project directory', process.cwd())
+  .action(async (description: string, opts: { type?: AssetType; api?: string; cwd: string }) => {
+    await generateCommand(description, {
+      type: opts.type,
+      baseUrl: opts.api,
+      cwd: opts.cwd,
+    })
+  })
+
+program.parseAsync().catch((err) => {
+  // Commands that own a spinner print the error via spinner.fail() and rethrow,
+  // so we only print here when nothing else did.
+  if (err instanceof NotLoggedInError) {
+    console.error(chalk.red(err.message))
+  }
+  process.exit(1)
+})

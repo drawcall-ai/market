@@ -15,7 +15,11 @@ program
   .description('Install assets into your project')
   .argument('<assets...>', 'Assets to install (e.g. my-model, my-model@^2.0.0)')
   .option('--unapproved', 'Include unapproved versions', false)
-  .option('--api <url>', 'API base URL', process.env.MARKET_API_URL ?? 'http://localhost:8787')
+  .option(
+    '--api <url>',
+    'API base URL',
+    process.env.MARKET_API_URL ?? 'https://api.market.drawcall.ai',
+  )
   .option('--cwd <dir>', 'Project directory', process.cwd())
   .action(async (assetArgs: string[], opts) => {
     const client = createMarketClient({ baseUrl: opts.api })

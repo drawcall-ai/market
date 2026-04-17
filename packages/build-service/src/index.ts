@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as os from 'os'
 import { createMarketClient, createInternalClient } from '@drawcall/market'
 
-const API_URL = process.env.API_URL ?? 'http://localhost:8787'
+const API_URL = process.env.API_URL ?? 'https://api.market.drawcall.ai'
 
 const client = createMarketClient({ baseUrl: API_URL })
 const internalClient = createInternalClient({ baseUrl: API_URL })

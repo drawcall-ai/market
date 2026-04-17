@@ -7,31 +7,26 @@ import type { InternalContract } from './internal-contract.js'
 export type MarketClient = ContractRouterClient<AppContract>
 export type InternalClient = ContractRouterClient<InternalContract>
 
+const DEFAULT_BASE_URL = 'https://api.market.drawcall.ai'
+
 export interface MarketClientOptions {
-  baseUrl: string
+  baseUrl?: string
   fetch?: typeof globalThis.fetch
 }
 
-function resolveUrl(baseUrl: string, path: string): string {
-  if (baseUrl) return `${baseUrl}${path}`
-  // In browser environments, use the current origin for relative URLs
-  if (typeof globalThis !== 'undefined' && 'location' in globalThis) {
-    return `${(globalThis as unknown as { location: { origin: string } }).location.origin}${path}`
-  }
-  throw new Error('baseUrl is required in non-browser environments')
-}
-
-export function createMarketClient(opts: MarketClientOptions): MarketClient {
+export function createMarketClient(opts: MarketClientOptions = {}): MarketClient {
+  const baseUrl = opts.baseUrl || DEFAULT_BASE_URL
   const link = new RPCLink({
-    url: resolveUrl(opts.baseUrl, '/api/rpc'),
+    url: new URL('/api/rpc', baseUrl).href,
     fetch: opts.fetch,
   })
   return createORPCClient<MarketClient>(link)
 }
 
-export function createInternalClient(opts: MarketClientOptions): InternalClient {
+export function createInternalClient(opts: MarketClientOptions = {}): InternalClient {
+  const baseUrl = opts.baseUrl || DEFAULT_BASE_URL
   const link = new RPCLink({
-    url: resolveUrl(opts.baseUrl, '/api/internal-rpc'),
+    url: new URL('/api/internal-rpc', baseUrl).href,
     fetch: opts.fetch,
   })
   return createORPCClient<InternalClient>(link)

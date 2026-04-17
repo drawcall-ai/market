@@ -11,7 +11,7 @@ export interface SearchCommandOptions {
 }
 
 export async function searchCommand(query: string, opts: SearchCommandOptions): Promise<void> {
-  const { client } = await getCliClient({ baseUrl: opts.baseUrl, requireAuth: true })
+  const { client } = await getCliClient({ baseUrl: opts.baseUrl })
 
   const spinner = ora(`Searching "${query}"`).start()
   let results

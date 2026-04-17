@@ -20,14 +20,15 @@ interface AssetRequest {
 }
 
 export async function installCommand(args: string[], opts: InstallCommandOptions): Promise<void> {
-  const { client } = await getCliClient({ baseUrl: opts.baseUrl, requireAuth: true })
+  const { client, apiKey } = await getCliClient({ baseUrl: opts.baseUrl })
+  const canGenerate = Boolean(apiKey)
 
   const spinner = ora().start()
   try {
     const requests: AssetRequest[] = []
     for (const arg of args) {
       spinner.text = `Resolving "${truncate(arg, 40)}"`
-      requests.push(await resolveArg(client, arg, opts.type, spinner))
+      requests.push(await resolveArg(client, arg, opts.type, spinner, canGenerate))
     }
 
     spinner.text = 'Resolving dependency tree'
@@ -53,13 +54,14 @@ export async function installCommand(args: string[], opts: InstallCommandOptions
 }
 
 /**
- * Fallthrough: exact-name → top-1 search hit → auto-generate.
+ * Fallthrough: exact-name → top-1 search hit → auto-generate (auth only).
  */
 async function resolveArg(
   client: MarketClient,
   arg: string,
   type: AssetType | undefined,
   spinner: Ora,
+  canGenerate: boolean,
 ): Promise<AssetRequest> {
   // 1. Try parsing as asset-name[@range] and looking up exact
   const parsed = parseNameAndRange(arg)
@@ -84,7 +86,13 @@ async function resolveArg(
     return { name: hit.name, range: '*' }
   }
 
-  // 3. Auto-generate
+  // 3. Auto-generate (requires auth)
+  if (!canGenerate) {
+    throw new Error(
+      `No matches for "${arg}". Run \`market login\` to enable auto-generation of missing assets.`,
+    )
+  }
+
   spinner.text = `No matches — generating "${truncate(arg, 40)}"`
   const generated = await generateAndWait(
     client,

@@ -7,6 +7,11 @@ import { applyTemplate } from '../../templates/index.js'
 import { embedQuery } from '../../services/embedding.js'
 import { getFromR2 } from '../../lib/storage.js'
 
+// Minimum cosine similarity for a Vectorize match to be considered a real hit.
+// Empirically tuned for text-embedding-3-small at 768 dims: ~0.35 separates
+// genuinely related results from drift. Raise for stricter matching.
+const MIN_SIMILARITY = 0.35
+
 export const assetRouter = {
   getByName: impl.asset.getByName.handler(async ({ context, input }) => {
     const asset = await context.db.query.assets.findFirst({
@@ -40,9 +45,8 @@ export const assetRouter = {
         filter: type ? { type } : undefined,
       })
 
-      const matchedIds = vectorResults.matches
-        .slice(offset, offset + limit)
-        .map((m) => Number(m.id))
+      const relevantMatches = vectorResults.matches.filter((m) => m.score >= MIN_SIMILARITY)
+      const matchedIds = relevantMatches.slice(offset, offset + limit).map((m) => Number(m.id))
 
       if (matchedIds.length === 0) {
         return { items: [], total: 0, page, limit, totalPages: 0 }
@@ -86,10 +90,10 @@ export const assetRouter = {
 
       return {
         items: ordered,
-        total: vectorResults.matches.length,
+        total: relevantMatches.length,
         page,
         limit,
-        totalPages: Math.ceil(vectorResults.matches.length / limit),
+        totalPages: Math.ceil(relevantMatches.length / limit),
       }
     }
 
